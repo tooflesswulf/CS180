@@ -1,8 +1,6 @@
 package blackbox;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
 import java.util.Scanner;
 
 /**
@@ -18,61 +16,69 @@ import java.util.Scanner;
 
 
 public class BlackBox {
-    static final boolean ONE_BOUNCE = true;
-
     public static int highScore = -1;
     
+    public static char[][] box;
+    public static int score;
+    public static int numball;
+    public static int numlink;
+    public static boolean end;
+    public static int size;
+    
     private GridManager gm;
-    private int[][] guesses;
-    private int score;
-    private boolean playing;
+    private GuessManager guesses;
     
     public BlackBox() {
         this(0, 0, 0);
     }
     
     public BlackBox(int size, int numball, int score) {
-        setSize(size);
+        this(size+2, numball, 0, true, score);
+    }
+    
+    public BlackBox(int size, int numball, int numlink, boolean end, int score) {
         setNumball(numball);
+        setSize(size-2);
+        setEnd(end);
         setScore(score);
-        setEnd(true); //Not playing yet
+        numlink = gm.getNumlink();
     }
 
+    public char[][] getBox() {return box;}
     public int getScore() {return score;}
-    public boolean getEnd() {return !playing;}
-    public int getSize() {return gm.size;}
+    public int getNumball() {return numball;}
+    public int getNumlink() {return numlink;}
+    public boolean getEnd() {return end;}
+    public int getSize() {return size;}
     
-    public int getNumGuessLeft() {
-        int count = 0;
-        for(int[] g : guesses) {
-            if(g[0]!=-1 && g[1]!=-1) {
-                count++;
-            }
-        }
-        return guesses.length - count;
+    public int getGuessLeft() {
+        return guesses.getGuessLeft();
     }
     
     public boolean checkGuesses() {
         if(!getEnd()) return false;
-        for(int[] pos:guesses) {
+        for(Integer[] pos:guesses.getGuesses()) {
             if(!gm.checkObstacle(pos[0], pos[1])) return false;
         }
         return true;
     }
     
     public void setScore(int score) {this.score = score;}
-    public void setNumball(int numball) {
-        guesses = new int[numball][2];
-        for(int[] g:guesses) {
-            g[0] = -1;
-            g[1] = -1;
-        }
+    public void setNumball(int nball) {
+        numball = nball;
+        guesses = new GuessManager(nball);
     }
-    public void setEnd(boolean end) {playing = !end;}
+    public void setEnd(boolean end) {this.end = end;}
     public void setSize(int size) {
         gm = new GridManager(size);
+        loadBox();
     }
     
+    /**
+     * Sets the internal game field to be the same as `box`.
+     * Ignores the ports specified by `box`.
+     * @param box the preset field to copy.
+     */
     public void setBox(char[][] box) {
         ArrayList<Integer[]> balls = new ArrayList<>();
         for(int r=0; r<box.length; ++r) {
@@ -87,6 +93,15 @@ public class BlackBox {
         setNumball(balls.size());
         setSize(box.length-2);
         gm.placeBalls(balls);
+        
+        loadBox();
+    }
+    
+    private void loadBox() {
+        box = gm.getGridChr(true);
+        for(Integer[] pt:guesses.getGuesses()) {
+            box[pt[0]][pt[1]] = '*';
+        }
     }
     
     public void printbox() {
@@ -105,9 +120,9 @@ public class BlackBox {
         for(int i=0; i<gm.size+2; ++i) for(int j=0; j<col_spacing; ++j) sb.append("=");
         sb.append("=\n");
         
-        String[][] data = gm.getPorts(getEnd());
+        String[][] data = gm.getGrid(getEnd());
         
-        for(int[] coords: guesses) {
+        for(Integer[] coords: guesses.getGuesses()) {
             int gr = coords[0]; int gc = coords[1];
             if(gr!=-1 && gc!=-1)
                 data[gr+1][gc+1] = "*";
@@ -135,9 +150,10 @@ public class BlackBox {
     
     public void initialize() {
         setScore(0);
-        setNumball(guesses.length);
-        gm.resetBalls(guesses.length);
-        playing = true;
+        setNumball(guesses.getNball());
+        gm.resetBalls(guesses.getNball());
+        loadBox();
+        end = false;
     }
     
     public void check(int r, int c) {
@@ -145,21 +161,19 @@ public class BlackBox {
             gm.getEndPoint();
             printbox();
             ++score;
-            return;
         } else if(gm.inBounds(r-2, c-2)) {
-            int nguess = guesses.length-getNumGuessLeft();
-            
-            if(nguess == guesses.length){
-                System.out.println(String.format("You've already made %d guesses", nguess));
+            boolean success = guesses.addGuess(r-2, c-2);
+    
+            if(!success){
+                System.out.println(String.format("You've already made %d guesses", guesses.getNball()));
                 return;
             }
-            guesses[nguess][0] = r-2;
-            guesses[nguess][1] = c-2;
             
             printbox();
-            return;
+        } else {
+            System.out.println("Bad input. Choose numbers that are in bound.");
         }
-        System.out.println("Bad input. Choose numbers that are in bound.");
+        loadBox();
     }
     
     public static void main(String[] args) {
@@ -179,7 +193,7 @@ public class BlackBox {
             while (true) {
                 String in = getVerifiedInput(sc);
                 if(in.equals("submit")) {
-                    if(bb.getNumGuessLeft()==0) {
+                    if(bb.getGuessLeft()==0) {
                         break;
                     } else {
                         System.out.println("You haven't guessed enough times yet.");
@@ -240,7 +254,7 @@ public class BlackBox {
             if (in.equals("submit")) return in;
             if (in.equals("quit")||in.equals("q")) return in;
     
-            System.out.println("Please enter a valid input. (d,d/submit/quit)");
+            System.out.println("Please enter a valid input. (%d,%d/submit/quit)");
         }
     }
 }

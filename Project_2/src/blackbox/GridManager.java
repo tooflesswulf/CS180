@@ -37,7 +37,7 @@ class GridManager {
         going = false;
     }
     
-    public String[][] getPorts(boolean reveal) {
+    public String[][] getGrid(boolean reveal) {
         String[][] ret = new String[size+2][size+2];
         
         for(int r=0; r<size+2; ++r) {
@@ -58,6 +58,30 @@ class GridManager {
         ret[0][size+1] = "X";
         ret[size+1][size+1] = "X";
         
+        return ret;
+    }
+    
+    public char[][] getGridChr(boolean reveal) {
+        char[][] ret = new char[size+2][size+2];
+    
+        for(int r=0; r<size+2; ++r) {
+            for(int c=0; c<size+2; ++c) {
+                if(inBounds(r-1, c-1)) {
+                    ret[r][c] = (reveal && grid[r-1][c-1]==1) ? '0' : ' ';
+                } else {
+                    int to_put = ports[r][c];
+                    if(to_put==0) ret[r][c] = '#';
+                    else if(to_put==-1) ret[r][c] = 'R';
+                    else if(to_put==-2) ret[r][c] = 'H';
+                    else ret[r][c] = (char)('0'+to_put);
+                }
+            }
+        }
+        ret[0][0] = 'X';
+        ret[size+1][0] = 'X';
+        ret[0][size+1] = 'X';
+        ret[size+1][size+1] = 'X';
+    
         return ret;
     }
     
@@ -184,7 +208,7 @@ class GridManager {
 //                    dir-=1; //If there's something front left, turn right.
 //                }
                 
-                //Did some math and this works out. just trust.
+                //Did some math and this works out. System of 3 eq's and 3 unknowns.
                 dir+=2;
                 if(front_left) dir+=1;
                 if(front_right) dir-=1;
