@@ -27,7 +27,7 @@ public class XerosCoin implements CryptoCurrency {
     public double getInterest() {
         switch(demand) {
             case HIGH:
-                interest = 0.5;
+                interest = 0.05;
                 break;
             case ABOVE_AVERAGE:
                 interest = 0.025;
@@ -39,7 +39,7 @@ public class XerosCoin implements CryptoCurrency {
                 interest = -0.025;
                 break;
             case LOW:
-                interest = -0.5;
+                interest = -0.05;
                 break;
         }
         return interest;
@@ -55,7 +55,7 @@ public class XerosCoin implements CryptoCurrency {
     public void mine(int attempts) {
         Random rand = new Random();
         for(int i=0; i<attempts; ++i) {
-            //1% chance
+            //4% chance
             if(rand.nextInt(100) < 4) ++muns;
         }
     }
