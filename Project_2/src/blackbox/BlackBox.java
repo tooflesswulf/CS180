@@ -66,11 +66,11 @@ public class BlackBox {
     public void setScore(int score) {this.score = score;}
     public void setNumball(int nball) {
         numball = nball;
-        guesses = new GuessManager(nball);
+        guesses = new GuessManager(nball, this);
     }
     public void setEnd(boolean end) {this.end = end;}
     public void setSize(int size) {
-        gm = new GridManager(size);
+        gm = new GridManager(size, this);
         loadBox();
     }
     
@@ -93,11 +93,9 @@ public class BlackBox {
         setNumball(balls.size());
         setSize(box.length-2);
         gm.placeBalls(balls);
-        
-        loadBox();
     }
     
-    private void loadBox() {
+    public void loadBox() {
         box = gm.getGridChr(true);
         for(Integer[] pt:guesses.getGuesses()) {
             box[pt[0]][pt[1]] = '*';
@@ -152,7 +150,6 @@ public class BlackBox {
         setScore(0);
         setNumball(guesses.getNball());
         gm.resetBalls(guesses.getNball());
-        loadBox();
         end = false;
     }
     
@@ -173,7 +170,6 @@ public class BlackBox {
         } else {
             System.out.println("Bad input. Choose numbers that are in bound.");
         }
-        loadBox();
     }
     
     public static void main(String[] args) {
@@ -187,6 +183,12 @@ public class BlackBox {
             bb.setSize(5+difficulty);
             bb.setNumball(3);
             bb.initialize();
+//            char[][] initbox = {{'X','#','#','#','X'},
+//                    {'#',' ','0',' ','#'},
+//                    {'#',' ',' ',' ','#'},
+//                    {'#',' ','0','0','#'},
+//                    {'X','#','#','#','X'}};
+//            bb.setBox(initbox);
             bb.printbox();
     
             int qcode = 0;
@@ -253,7 +255,7 @@ public class BlackBox {
             if (in.matches("[0-9]+,[0-9]+")) return in;
             if (in.equals("submit")) return in;
             if (in.equals("quit")||in.equals("q")) return in;
-    
+
             System.out.println("Please enter a valid input. (%d,%d/submit/quit)");
         }
     }

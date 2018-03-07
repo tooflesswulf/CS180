@@ -26,8 +26,10 @@ class GridManager {
     private double dir;
     private boolean bounced=false;
     private boolean going;
+    private BlackBox bb;
     
-    public GridManager(int size) {
+    public GridManager(int size, BlackBox bb) {
+        this.bb = bb;
         this.size = size;
         this.grid = new int[size][size];
         this.ports = new int[size+2][size+2];
@@ -43,7 +45,7 @@ class GridManager {
         for(int r=0; r<size+2; ++r) {
             for(int c=0; c<size+2; ++c) {
                 if(inBounds(r-1, c-1)) {
-                    ret[r][c] = (reveal && grid[r-1][c-1]==1) ? "0" : "";
+                    ret[r][c] = (reveal && grid[r-1][c-1]==1) ? "0" : " ";
                 } else {
                     int to_put = ports[r][c];
                     if(to_put==0) ret[r][c] = "#";
@@ -114,6 +116,8 @@ class GridManager {
                 ballCount++;
             }
         }
+        
+        bb.loadBox();
     }
     
     public void placeBalls(ArrayList<Integer[]> balls) {
@@ -122,6 +126,8 @@ class GridManager {
         for(Integer[] pts:balls) {
             grid[pts[0]][pts[1]] = 1;
         }
+        
+        bb.loadBox();
     }
     
     /**
@@ -179,6 +185,8 @@ class GridManager {
                 ports[end_r][end_c] = label;
             }
         }
+        
+        bb.loadBox();
     }
     
     /**

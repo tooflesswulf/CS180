@@ -17,8 +17,11 @@ import java.util.Iterator;
 public class GuessManager {
     private ArrayList<Integer[]> guesses;
     private int nball;
+    private BlackBox bb;
     
-    public GuessManager(int nball) {
+    public GuessManager(int nball, BlackBox bb) {
+        this.bb = bb;
+        
         setNball(nball);
         this.guesses = new ArrayList<>();
     }
@@ -51,6 +54,7 @@ public class GuessManager {
         if(getGuessLeft() <= 0) return false;
         
         guesses.add(pt_add);
+        bb.loadBox();
         return true;
     }
 }
