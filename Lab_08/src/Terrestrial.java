@@ -12,7 +12,7 @@
 public class Terrestrial extends Planet{
     private String habitability;
     
-    public Terrestrial(double mass, double radius, String name, double distFromSun, String habitability) {
+    public Terrestrial(double mass, double radius, String name, double distFromSun, String habitability) throws PlutoNotAPlanetException {
         super(mass, radius, name, distFromSun);
         this.habitability = habitability;
     }

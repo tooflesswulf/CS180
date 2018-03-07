@@ -12,7 +12,7 @@
 public class IceGiant extends Planet{
     private String spacecraftVisited;
     
-    public IceGiant(double mass, double radius, String name, double distFromSun, String spacecraftVisited) {
+    public IceGiant(double mass, double radius, String name, double distFromSun, String spacecraftVisited) throws PlutoNotAPlanetException {
         super(mass, radius, name, distFromSun);
         this.spacecraftVisited = spacecraftVisited;
     }
