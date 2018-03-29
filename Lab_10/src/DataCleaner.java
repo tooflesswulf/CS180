@@ -34,7 +34,6 @@ public class DataCleaner {
     private ArrayList<InternalRepresentation> rows = new ArrayList<InternalRepresentation>();
 
     public InternalRepresentation parseAndClean(String s){
-        
         //TODO get rid of the last 3 data points (latitude,longitude, last modified)
         String[] cols = s.split(",");
         InternalRepresentation ir = new InternalRepresentation(
