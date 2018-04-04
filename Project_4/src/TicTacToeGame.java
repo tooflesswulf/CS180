@@ -22,13 +22,13 @@ public class TicTacToeGame {
     private int gameID;
     
     public TicTacToeGame(ChatUser player1, ChatUser player2) {
-        if(Math.random() > .5) {
+//        if(Math.random() > .5) {
             this.player1=player1;
             this.player2=player2;
-        } else {
-            this.player1 = player2;
-            this.player2 = player1;
-        }
+//        } else {
+//            this.player1 = player2;
+//            this.player2 = player1;
+//        }
         
         gameID = idGenerator;
         idGenerator++;
@@ -37,7 +37,7 @@ public class TicTacToeGame {
     /**
      * Returns the ID of the winner. A tie returns -1, and no winner yet return -2.
      */
-    public ChatUser getWinnerID() {
+    public ChatUser getWinnerUser() {
         if(winner == tile.X) return player1;
         if(winner == tile.O) return player2;
         return null;
@@ -68,6 +68,13 @@ public class TicTacToeGame {
     public ChatUser[] getPlayers() {
         ChatUser[] players = {player1, player2};
         return players;
+    }
+    
+    public ChatUser getOpponent(ChatUser u) {
+        if(!playerInGame(u)) return null;
+        
+        if(u.equals(player1)) return player2;
+        return player1;
     }
     
     public boolean place(int spot) {
@@ -148,5 +155,28 @@ public class TicTacToeGame {
         }
         
         return String.join(div, cols);
+    }
+    
+    public String toString(ChatUser user) {
+        if(!playerInGame(user)) return toString();
+    
+        String pre = String.format("Game %d vs %s:\n", getID(), getOpponent(user).getName());
+        
+        String end = "";
+        if(getCurrentPlayer().equals(user)) {
+            end = "\nYour turn!";
+        }
+        
+        return pre + toString() + end;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TicTacToeGame) {
+            TicTacToeGame otherGame = (TicTacToeGame) obj;
+            return gameID == otherGame.gameID;
+        }
+        
+        return super.equals(obj);
     }
 }

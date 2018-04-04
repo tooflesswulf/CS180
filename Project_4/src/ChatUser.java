@@ -10,25 +10,14 @@
  */
 
 public interface ChatUser {
-    public int getId();
-    public String getName();
-    public void sendRequest(ChatMessage msg);
+    int getId();
+    String getName();
+    void sendRequest(ChatMessage msg);
+    
+    default void sendSystemMessage(String content) {
+        sendRequest(new ChatMessage(ChatMessage.SERVER, content, this));
+    }
+    default boolean equals(ChatUser other) {
+        return getId() == other.getId();
+    }
 }
-
-//public class ChatUser {
-//    int id;
-//    String username;
-//
-//    public ChatUser(int id, String name) {
-//        this.id = id;
-//        this.username = name;
-//    }
-//
-//    public int getId() {
-//        return id;
-//    }
-//
-//    public String getName() {
-//        return username;
-//    }
-//}

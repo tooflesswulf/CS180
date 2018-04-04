@@ -26,13 +26,13 @@ final class ChatMessage implements Serializable {
         this.recipient=recipient;
     }
     
+    public ChatMessage(int cmd, String content, ChatUser recipient) {
+        this(cmd, content, recipient.getId());
+    }
+    
     
     public int getCmd() { return cmd; }
     public String getContent() { return content; }
     public int getRecipient() { return recipient; }
-    
-    public static ChatMessage call(String content, int recipient) {
-        return new ChatMessage(SERVER, content, recipient);
-    }
 }
 

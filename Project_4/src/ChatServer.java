@@ -14,10 +14,6 @@ final class ChatServer {
     private final List<ClientThread> clients = new ArrayList<>();
     private final int port;			// port the server is hosted on
     
-    final int MAX_LINE_SIZE = 30;
-    
-    private List<TicTacToeGame> games = new ArrayList<>();
-    
     private MessageHandler handler;
 
     /**
@@ -71,31 +67,6 @@ final class ChatServer {
     
     public synchronized List<ClientThread> getClients() {
         return clients;
-    }
-    
-    public synchronized List<TicTacToeGame> getGames() {
-        return games;
-    }
-    
-    public synchronized boolean addGame(TicTacToeGame game) {
-        return games.add(game);
-    }
-    
-    public synchronized void dropGame(int gameID) {
-        for(TicTacToeGame g:games) {
-            if(g.getID() == gameID) {
-                ChatUser[] us=g.getPlayers();
-    
-                us[0].sendRequest(ChatMessage.call(
-                        "Your tic tac toe game with " + us[1].getName() + " has ended.\n" +
-                                g.toString(), us[0].getId()));
-                us[1].sendRequest(ChatMessage.call(
-                        "Your tic tac toe game with " + us[0].getName() + " has ended.\n" +
-                                g.toString(), us[1].getId()));
-    
-                return;
-            }
-        }
     }
     
     /*

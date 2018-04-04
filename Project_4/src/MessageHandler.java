@@ -1,4 +1,6 @@
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,14 +16,16 @@ import java.util.stream.Collectors;
  */
 
 class MessageHandler {
+    private static final int MAX_NAME_SIZE = 60;
     private ChatServer server;
-    private final int MAX_LINE_SIZE = 50;
+    
+    private List<TicTacToeGame> games = new ArrayList<>();
     
     public MessageHandler(ChatServer server) {
         this.server = server;
     }
     
-    public void parseInput(String in, ChatUser from) {
+    void parseInput(String in, ChatUser from) {
         if(in.charAt(0) == '\\' || in.charAt(0) == '/') {
             String[] args = in.split(" ");
             String cmd = args[0].substring(1).toLowerCase();
@@ -45,51 +49,55 @@ class MessageHandler {
     }
     
     private void logoutRequest(ChatUser user) {
-        user.sendRequest(new ChatMessage(ChatMessage.LOGOUT, "", user.getId()));
+        user.sendRequest(new ChatMessage(ChatMessage.LOGOUT, "", user));
     }
     
     private void listRequest(String[] args, ChatUser user) {
         if(args.length == 1) {
             String content = clientListString(user.getId());
-            user.sendRequest(ChatMessage.call(content, user.getId()));
+            user.sendSystemMessage(content);
             return;
         }
         
         StringBuilder sb = new StringBuilder();
         for(String s: Arrays.copyOfRange(args, 1, args.length)) {
             String retval = "Could not user with this id.";
-            try {
-                String name = findUserName(Integer.valueOf(s));
-                if(name!=null) retval = name;
-            } catch(Exception e) {}
             
+            try {
+                ChatUser targ=findUser(Integer.valueOf(s));
+                if (targ != null) retval = targ.getName();
+            } catch(NumberFormatException e) {
+                retval = "id must be an integer.";
+            }
+    
+    
             sb.append(String.format("%s: %s\n", s, retval));
         }
         
-        user.sendRequest(ChatMessage.call(sb.toString(), user.getId()));
+        user.sendSystemMessage(sb.toString());
     }
     
     private void dmRequest(String[] args, ChatUser user) {
         if(args.length < 2) {
             String content = "Bad call. usage: " + args[0] + " [other name] [message]";
-            user.sendRequest(ChatMessage.call(content, user.getId()));
+            user.sendSystemMessage(content);
             return;
         }
     
         String name = args[1];
-        int targ = findUserID(name);
-        if(targ == -1) {
+        ChatUser targ = findUser(name);
+        if(targ == null) {
             String content = name + " was not found in the user list.";
-            user.sendRequest(ChatMessage.call(content, user.getId()));
+            user.sendSystemMessage(content);
             return;
         }
-        if(targ == user.getId()) {
-            user.sendRequest(ChatMessage.call("lol u cant dm yourself", user.getId()));
+        if(user.equals(targ)) {
+            user.sendSystemMessage("lol u cant dm yourself");
             return;
         }
         
         String msg = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
-        user.sendRequest(new ChatMessage(msg, targ));
+        user.sendRequest(new ChatMessage(msg, targ.getId()));
     }
     
     private void tttRequest(String[] args, ChatUser user) {
@@ -97,11 +105,12 @@ class MessageHandler {
                 args[0] + " start [other name]\tStart a game.\n  " +
                 args[0] + " show\t\t\tView all of your games & ids.\n  " +
                 args[0] + " show [game id]\t\tDisplay that game's board.\n  " +
-                args[0] + " place [id] [r] [c]\tPlace your marker at (r, c)\n" +
+                args[0] + " place [id] [r] [c]\tPlace your marker at (r, c)\n  " +
+                args[0] + " ff [game id]\t\tForfeit a game.\n" +
                 "If you have only a single game, the [game id] can be omitted.";
         
         if(args.length < 2) {
-            user.sendRequest(ChatMessage.call(errorContent, user.getId()));
+            user.sendSystemMessage(errorContent);
             return;
         }
         
@@ -120,47 +129,127 @@ class MessageHandler {
                 return;
             case "place":
                 return;
+            case "ff": case "forfeit":
+                tttForfeit(args, user);
+                return;
         }
-        user.sendRequest(ChatMessage.call(errorContent, user.getId()));
+        user.sendSystemMessage(errorContent);
     }
     
-    private void tttStart(String otherName, ChatUser user) {
+    private synchronized void tttStart(String otherName, ChatUser user) {
         ChatUser other = findUser(otherName);
         if(other == null) {
-            user.sendRequest(ChatMessage.call("User " + otherName + "could not be found.", user.getId()));
+            user.sendSystemMessage("User " + otherName + "could not be found.");
+            return;
+        }
+        if(user.equals(other)) {
+            user.sendSystemMessage("You can't start a game with yourself!");
             return;
         }
         TicTacToeGame game = new TicTacToeGame(other, user);
-        server.addGame(game);
+        games.add(game);
         
-        user.sendRequest(ChatMessage.call("You started a new Tic Tac Toe game with "+otherName, user.getId()));
-        other.sendRequest(ChatMessage.call(user.getName()+" has started a new Tic Tac Toe game with you", other.getId()));
+        user.sendSystemMessage("You started a new Tic Tac Toe game with "+otherName);
+        other.sendSystemMessage(user.getName()+" has started a new Tic Tac Toe game with you");
+        
+        game.getCurrentPlayer().sendSystemMessage("Your turn first!");
     }
     
     private void tttShow(String[] args, ChatUser user) {
-        List<TicTacToeGame> games = getUserGames(user);
-        if(games.size() == 0) {
-            user.sendRequest(ChatMessage.call("You don't have any games.", user.getId()));
+        List<TicTacToeGame> yourGames = getUserGames(user);
+        if(yourGames.size() == 0) {
+            user.sendSystemMessage("You don't have any games.");
             return;
         }
         
         if(args.length == 2) {
-            if(games.size() == 1) {
-                user.sendRequest(ChatMessage.call(games.get(0).toString(), user.getId()));
+            if(yourGames.size() == 1) {
+                TicTacToeGame g = yourGames.get(0);
+                user.sendSystemMessage(g.toString(user));
                 return;
             }
-            StringBuilder sb = new StringBuilder("Your games:\n");
-            for(TicTacToeGame g:games) {
-                sb.append(g.getID());
-            }
+            
+            user.sendSystemMessage(tttListString(user, yourGames));
             return;
         } else if(args.length == 3) {
-        
+            int targID = Integer.valueOf(args[2]);
+            for(TicTacToeGame g:yourGames) {
+                if(g.getID() == targID) {
+                    user.sendSystemMessage(g.toString(user));
+                    return;
+                }
+            }
+            user.sendSystemMessage("Could not find a game with id: "+args[2]);
         }
     }
     
-    private List<TicTacToeGame> getUserGames(ChatUser user) {
-        return server.getGames().stream()
+    private void tttForfeit(String[] args, ChatUser user) {
+        List<TicTacToeGame> yourGames = getUserGames(user);
+        if(yourGames.size() == 0) {
+            user.sendSystemMessage("You don't have any games.");
+            return;
+        }
+        
+        if(args.length == 2) {
+            if(yourGames.size() == 1) {
+                TicTacToeGame g = yourGames.get(0);
+                removeGame(g.getID());
+                
+                user.sendSystemMessage("You forfeited the match.");
+                g.getOpponent(user).sendSystemMessage(
+                        user.getName() + " forfeited match " + g.getID() + ":\n" + g.toString());
+                return;
+            }
+            
+            user.sendSystemMessage("Please specify which game:\n  " +
+                    args[0] + " " + args[1] + "[game id]\t\tForfeit the game.");
+            return;
+        }
+        
+        StringBuilder error = new StringBuilder("");
+        for(int i=2; i<args.length; ++i) {
+            int ffID = Integer.valueOf(args[i]);
+            TicTacToeGame g = removeGame(ffID);
+            
+            if(g==null || !g.playerInGame(user)) {
+                error.append(args[i]);
+                error.append(" ");
+                continue;
+            }
+            
+            g.getOpponent(user).sendSystemMessage(user.getName() + " forfeited match " + g.getID() + ":\n" +
+                    g.toString());
+        }
+        
+        if(error.length() > 0) {
+            user.sendSystemMessage("Could not remove the following game ids:\n  " + error.toString());
+            return;
+        }
+        user.sendSystemMessage("Successfully removed the game id(s) specified.");
+    }
+    
+    private synchronized TicTacToeGame removeGame(int gameID) {
+        for(Iterator<TicTacToeGame> it = games.iterator(); it.hasNext();) {
+            TicTacToeGame g = it.next();
+            
+            if(g.getID() == gameID) {
+                if(!g.isplaying()) {
+                    String msg = g.getWinnerUser().getName() + " won game " + g.getID() + ":\n" + g.toString();
+                    
+                    for(ChatUser u : g.getPlayers()) {
+                        u.sendSystemMessage(msg);
+                    }
+                }
+                it.remove();
+                return g;
+            }
+        }
+        
+        return null;
+    }
+    
+    private synchronized List<TicTacToeGame> getUserGames(ChatUser user) {
+        return games.stream()
                 .filter(g -> g.playerInGame(user))
                 .collect(Collectors.toList());
     }
@@ -181,76 +270,37 @@ class MessageHandler {
         return null;
     }
     
-    private int findUserID(String name) {
-        for(ChatUser u : server.getClients()) {
-            if(u.getName().equalsIgnoreCase(name)) {
-                return u.getId();
-            }
-        }
-        return -1;
-    }
-    
-    private String findUserName(int id) {
-        for(ChatUser u : server.getClients()) {
-            if(u.getId() == id) {
-                return u.getName();
-            }
-        }
-        return null;
-    }
-    
     private String clientListString(int requestFrom) {
-        char[] spaces;
-        
-        StringBuilder sb = new StringBuilder();
-        
-        spaces = new char[MAX_LINE_SIZE+1];
-        Arrays.fill(spaces, '_');
-        spaces[MAX_LINE_SIZE] = '\n';
-        sb.append(spaces);
-        
-        Arrays.fill(spaces, ' ');
-        System.arraycopy("|   id   | name".toCharArray(), 0, spaces, 0, 15);
-        spaces[MAX_LINE_SIZE-1] = '|';
-        spaces[MAX_LINE_SIZE] = '\n';
-        sb.append(spaces);
+        int[] sizes = {-1, MAX_NAME_SIZE};
+        String[] headers = {"id", "name"};
+        TablePrinter printer = new TablePrinter(headers, sizes);
         
         for(ChatUser user : server.getClients()) {
-            boolean identifyUser = requestFrom == user.getId();
+            boolean identifyUser = requestFrom==user.getId();
 //            if(identifyUser) continue;
-    
-            String idstr = String.format("%6d", user.getId());
-            System.arraycopy(idstr.toCharArray(), 0, spaces, 2, idstr.length());
             
-//            sb.append(String.format("| %6d | ", user.getId()));
-            int lineLen = 2+6+3;
-            int maxNameLen = MAX_LINE_SIZE-lineLen-2;
-            
-            if(identifyUser) maxNameLen -= 5;
-    
-            if(user.getName().length() > maxNameLen) {
-                System.arraycopy(user.getName().toCharArray(), 0, spaces, lineLen, maxNameLen-3);
-                System.arraycopy("...".toCharArray(), 0, spaces, lineLen+maxNameLen-3, 3);
-                if(identifyUser) {
-                    System.arraycopy("(you)".toCharArray(), 0, spaces, lineLen + maxNameLen, 5);
-                }
-            } else {
-                String name = String.format("%-" + maxNameLen + "s", user.getName());
-                System.arraycopy(name.toCharArray(), 0, spaces, lineLen, maxNameLen);
-                if(identifyUser) {
-                    System.arraycopy("(you)".toCharArray(), 0, spaces, lineLen + user.getName().length(), 5);
-                }
+            String[] toAdd = {String.valueOf(user.getId()), user.getName()};
+            if(identifyUser) {
+                toAdd[1] = "(you) " + user.getName();
             }
-            sb.append(spaces);
+            
+            printer.add(toAdd);
         }
         
-        spaces = new char[MAX_LINE_SIZE];
-        Arrays.fill(spaces, '_');
-        spaces[0] = '|';
-        spaces[MAX_LINE_SIZE-1] = '|';
-        spaces[9] = '|';
-        sb.append(spaces);
+        return printer.toString();
+    }
+    
+    private String tttListString(ChatUser user, List<TicTacToeGame> games1) {
+        String[] headers = {"game id", "Opponent Name", "turn"};
+        int[] lengthLimits = {-1, MAX_NAME_SIZE, -1};
+        TablePrinter printer = new TablePrinter(headers, lengthLimits);
+        for(TicTacToeGame g:games1) {
+            String[] vals = {String.valueOf(g.getID()), g.getOpponent(user).getName(), "theirs"};
         
-        return sb.toString();
+            if(g.getCurrentPlayer().equals(user)) vals[2] = "yours";
+            
+            printer.add(vals);
+        }
+        return printer.toString();
     }
 }
