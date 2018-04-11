@@ -18,6 +18,7 @@ public interface ChatUser {
         sendRequest(new ChatMessage(ChatMessage.SERVER, content, this));
     }
     default boolean equals(ChatUser other) {
+        if(other == null) return false;
         return getId() == other.getId();
     }
 }

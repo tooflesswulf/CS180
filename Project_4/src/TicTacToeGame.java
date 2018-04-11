@@ -23,8 +23,8 @@ public class TicTacToeGame {
     
     public TicTacToeGame(ChatUser player1, ChatUser player2) {
 //        if(Math.random() > .5) {
-            this.player1=player1;
-            this.player2=player2;
+            this.player1=player2;
+            this.player2=player1;
 //        } else {
 //            this.player1 = player2;
 //            this.player2 = player1;
@@ -101,7 +101,7 @@ public class TicTacToeGame {
             
             if(Math.abs(rows[r]) == BOARD_SIZE || Math.abs(cols[c]) == BOARD_SIZE ||
                     Math.abs(diags[0]) == BOARD_SIZE || Math.abs(diags[1]) == BOARD_SIZE) {
-                winner =whoseTurn;
+                winner = whoseTurn;
                 return true;
             }
             
@@ -163,7 +163,7 @@ public class TicTacToeGame {
         String pre = String.format("Game %d vs %s:\n", getID(), getOpponent(user).getName());
         
         String end = "";
-        if(getCurrentPlayer().equals(user)) {
+        if(user.equals(getCurrentPlayer())) {
             end = "\nYour turn!";
         }
         

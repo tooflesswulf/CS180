@@ -1,4 +1,4 @@
-package com.example.sripath.lab11;
+package com.sripath.lab11;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
@@ -16,6 +16,8 @@ public class SetCounter extends AppCompatActivity {
 
         //The code when the setButton is clicked.
         //Todo 1: define the setButton and create its setOnClickListener. inside it past the following code:-
+        final Button setButton = (Button) findViewById(R.id.setButton);
+
         /**
          * On clicking the button the value of counterValueText should be sent to the MainActivity and it should be called.
          * EditText counterValueText = (EditText) findViewById(R.id.counterValueText);
@@ -24,5 +26,26 @@ public class SetCounter extends AppCompatActivity {
          * //Todo 2: use putExtra("Value",number); to pass values to the MainActivity.
          * startActivity(activityChangeIntent);
          */
+
+        setButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                EditText valueEditText = (EditText) findViewById(R.id.counterValueText);
+
+                String val = valueEditText.getText().toString();
+
+                try {
+                    int num = Integer.parseInt(val);
+
+                    Intent activityChangeIntent = new Intent(SetCounter.this, MainActivity.class);
+                    activityChangeIntent.putExtra("newNum", num);
+                    startActivity(activityChangeIntent);
+                } catch(Exception e) {
+                    Intent activityChangeIntent = new Intent(SetCounter.this, MainActivity.class);
+                    activityChangeIntent.putExtra("newNum", 0);
+                    startActivity(activityChangeIntent);
+                }
+            }
+        });
     }
 }

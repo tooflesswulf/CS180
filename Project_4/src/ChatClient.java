@@ -37,6 +37,7 @@ final class ChatClient {
         try {
             socket = new Socket(server, port);
         } catch (IOException e) {
+            System.out.println("Server is not online.");
             e.printStackTrace();
             return false;
         }

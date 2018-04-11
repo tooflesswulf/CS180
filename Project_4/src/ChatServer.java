@@ -209,6 +209,11 @@ final class ChatServer {
      *  If the port number is not specified 1500 is used
      */
     public static void main(String[] args) {
+        int port = 1500;
+        if(args.length == 1) {
+            port = Integer.valueOf(args[0]);
+        }
+        
         ChatServer server = new ChatServer(1500);
         server.start();
     }

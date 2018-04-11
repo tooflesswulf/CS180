@@ -49,6 +49,7 @@ class MessageHandler {
     }
     
     private void logoutRequest(ChatUser user) {
+        user.sendRequest(new ChatMessage(ChatMessage.SERVER, user.getName() + " has logged out.", -1));
         user.sendRequest(new ChatMessage(ChatMessage.LOGOUT, "", user));
     }
     
@@ -104,8 +105,8 @@ class MessageHandler {
         String errorContent = "Bad call. Usage:\n  " +
                 args[0] + " start [other name]\tStart a game.\n  " +
                 args[0] + " show\t\t\tView all of your games & ids.\n  " +
-                args[0] + " show [game id]\t\tDisplay that game's board.\n  " +
-                args[0] + " place [id] [r] [c]\tPlace your marker at (r, c)\n  " +
+                args[0] + " show [other name]\tDisplay that game's board.\n  " +
+                args[0] + " place [other name] [n]\tPlace your marker at spot (n)\n  " +
                 args[0] + " ff [game id]\t\tForfeit a game.\n" +
                 "If you have only a single game, the [game id] can be omitted.";
         
@@ -128,10 +129,14 @@ class MessageHandler {
                 tttShow(args, user);
                 return;
             case "place":
+                tttPlace(args, user);
                 return;
             case "ff": case "forfeit":
                 tttForfeit(args, user);
                 return;
+        }
+        switch (cmd) {
+        
         }
         user.sendSystemMessage(errorContent);
     }
@@ -146,6 +151,13 @@ class MessageHandler {
             user.sendSystemMessage("You can't start a game with yourself!");
             return;
         }
+        for(TicTacToeGame g : getUserGames(user)) {
+            if(g.getOpponent(user).equals(other)) {
+                user.sendSystemMessage("You can't start another game with the same person.");
+                return;
+            }
+        }
+        
         TicTacToeGame game = new TicTacToeGame(other, user);
         games.add(game);
         
@@ -172,15 +184,88 @@ class MessageHandler {
             user.sendSystemMessage(tttListString(user, yourGames));
             return;
         } else if(args.length == 3) {
-            int targID = Integer.valueOf(args[2]);
+            
+            int targID = getGameIDByOpponent(args[2], user);
             for(TicTacToeGame g:yourGames) {
                 if(g.getID() == targID) {
                     user.sendSystemMessage(g.toString(user));
                     return;
                 }
             }
-            user.sendSystemMessage("Could not find a game with id: "+args[2]);
+            user.sendSystemMessage("Could not find a game with opponent name: "+args[2]);
         }
+    }
+    
+    private void tttPlace(String[] args, ChatUser user) {
+        List<TicTacToeGame> yourGames = getUserGames(user);
+        if(yourGames.size() == 0) {
+            user.sendSystemMessage("You don't have any games.");
+            return;
+        }
+        if(args.length == 3) {
+            if(yourGames.size() == 1) {
+                TicTacToeGame g = yourGames.get(0);
+                int loc;
+                try {
+                    loc=Integer.valueOf(args[2]);
+                } catch(NumberFormatException e) {
+                    user.sendSystemMessage("You have to place a number");
+                    return;
+                }
+                
+                if(!g.getCurrentPlayer().equals(user) || !g.place(loc)) {
+                    user.sendSystemMessage("Something went wrong idk what");
+                    return;
+                }
+                
+                if(!g.isplaying()) {
+                    removeGame(g.getID());
+                    return;
+                }
+                
+                user.sendSystemMessage(g.toString(user));
+                ChatUser other = g.getOpponent(user);
+                other.sendSystemMessage(g.toString(other));
+                return;
+            }
+        
+            user.sendSystemMessage("Please specify your opponent");
+            return;
+        } else if(args.length == 4) {
+            int targID = getGameIDByOpponent(args[2], user);
+            for(TicTacToeGame g:yourGames) {
+                if(g.getID() == targID) {
+                    int loc;
+                    try {
+                        loc = Integer.valueOf(args[3]);
+                    } catch(NumberFormatException e) {
+                        user.sendSystemMessage("You have to place a number");
+                        return;
+                    }
+                    
+                    if(!g.getCurrentPlayer().equals(user) || !g.place(loc)) {
+                        user.sendSystemMessage("Something went wrong idk what");
+                        return;
+                    }
+    
+                    if(!g.isplaying()) {
+                        removeGame(g.getID());
+                        return;
+                    }
+                    
+                    user.sendSystemMessage(g.toString(user));
+                    ChatUser other = g.getOpponent(user);
+                    other.sendSystemMessage(g.toString(other));
+                    return;
+                }
+            }
+            user.sendSystemMessage("Could not find a game with opponent: "+args[2]);
+            return;
+        }
+        
+        user.sendSystemMessage("Invalid call.\n  " +
+                args[0] + " place [other name] [n]\tPlace your marker at spot (n)"
+        );
     }
     
     private void tttForfeit(String[] args, ChatUser user) {
@@ -202,13 +287,13 @@ class MessageHandler {
             }
             
             user.sendSystemMessage("Please specify which game:\n  " +
-                    args[0] + " " + args[1] + "[game id]\t\tForfeit the game.");
+                    args[0] + " " + args[1] + "[other name]\t\tForfeit the game.");
             return;
         }
         
         StringBuilder error = new StringBuilder("");
         for(int i=2; i<args.length; ++i) {
-            int ffID = Integer.valueOf(args[i]);
+            int ffID = getGameIDByOpponent(args[i], user);
             TicTacToeGame g = removeGame(ffID);
             
             if(g==null || !g.playerInGame(user)) {
@@ -225,7 +310,7 @@ class MessageHandler {
             user.sendSystemMessage("Could not remove the following game ids:\n  " + error.toString());
             return;
         }
-        user.sendSystemMessage("Successfully removed the game id(s) specified.");
+        user.sendSystemMessage("Successfully removed the game(s) specified.");
     }
     
     private synchronized TicTacToeGame removeGame(int gameID) {
@@ -254,6 +339,13 @@ class MessageHandler {
                 .collect(Collectors.toList());
     }
     
+    private synchronized int getGameIDByOpponent(String name, ChatUser user) {
+        for(TicTacToeGame g : getUserGames(user)) {
+            if(g.getOpponent(user).getName().equalsIgnoreCase(name)) return g.getID();
+        }
+        return -1;
+    }
+    
     private ChatUser findUser(int id) {
         for(ChatUser u : server.getClients()) {
             if(u.getId() == id)
@@ -277,8 +369,8 @@ class MessageHandler {
         
         for(ChatUser user : server.getClients()) {
             boolean identifyUser = requestFrom==user.getId();
-//            if(identifyUser) continue;
-            
+            if(identifyUser) continue;
+
             String[] toAdd = {String.valueOf(user.getId()), user.getName()};
             if(identifyUser) {
                 toAdd[1] = "(you) " + user.getName();
