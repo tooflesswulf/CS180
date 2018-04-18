@@ -1,3 +1,6 @@
+import javax.swing.*;
+import java.util.Optional;
+
 /**
  * A remove controller of a product inventory application.
  *
@@ -41,14 +44,27 @@ public final class RemoveController {
      * Gets the semantics of a remove view's remove button.
      */
     private void getRemoveButtonSemantics() {
-        //TODO implement method
+        String sku = removeView.getSkuTextField().getText();
+    
+        Product item = inventoryModel.searchBySku(sku).orElse(null);
+        if(item == null) {
+            JOptionPane.showMessageDialog(null,
+                    "A product with the specified SKU could not be found.",
+                    "Product inventory", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        inventoryModel.remove(item);
+        JOptionPane.showMessageDialog(null,
+                "The product has been successfully removed.",
+                "Product inventory", JOptionPane.INFORMATION_MESSAGE);
     } //getRemoveButtonSemantics
 
     /**
      * Gets the semantics of a remove view's clear button.
      */
     private void getClearButtonSemantics() {
-        //TODO implement method
+        removeView.getSkuTextField().setText("");
     } //getClearButtonSemantics
 
     /**

@@ -1,3 +1,7 @@
+import javax.swing.*;
+import java.util.List;
+import java.util.Optional;
+
 /**
  * An update controller of a product inventory application.
  *
@@ -41,14 +45,101 @@ public final class UpdateController {
      * Gets the semantics of an update view's update button.
      */
     private void getUpdateButtonSemantics() {
-        //TODO implement method
+        String sku = updateView.getSkuTextField().getText();
+        int choice = updateView.getFieldComboBox().getSelectedIndex();
+        String newVal = updateView.getNewFieldValueTextField().getText();
+        
+        Optional<Product> searchResult = inventoryModel.searchBySku(sku);
+        if(!searchResult.isPresent()) {
+            JOptionPane.showMessageDialog(null,
+                    "A product with the specified SKU could not be found.",
+                    "Product inventory", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        Product item = searchResult.get();
+        
+        switch (choice) {
+            case 0: //SKU
+                if(newVal==null || newVal.equals("")) {
+                    JOptionPane.showMessageDialog(null,
+                            "SKU cannot be empty.",
+                            "Product inventory", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                Product empty = new Product();
+                empty.setSku(newVal);
+                if(inventoryModel.contains(empty)) {
+                    JOptionPane.showMessageDialog(null,
+                            "The product could not be updated to that sku.\n" +
+                                    "A product with the specified SKU already exists.",
+                            "Product inventory", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                item.setSku(newVal);
+                break;
+            case 1: //Name
+                if(newVal==null || newVal.equals("")) {
+                    JOptionPane.showMessageDialog(null,
+                            "Name cannot be empty.",
+                            "Product inventory", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                item.setName(newVal);
+                break;
+            case 2: //Wholesale price
+                try {
+                    double p=Double.valueOf(newVal);
+                    item.setWholesalePrice(p);
+                    if(p <= 0) throw new NumberFormatException("nonnegative");
+                } catch(NumberFormatException e) {
+                    JOptionPane.showMessageDialog(null,
+                            "The specified price is not a valid number.",
+                            "Product inventory", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                break;
+            case 3: //Retail price
+                try {
+                    double p=Double.valueOf(newVal);
+                    item.setRetailPrice(p);
+                    if(p <= 0) throw new NumberFormatException("nonnegative");
+                } catch(NumberFormatException e) {
+                    JOptionPane.showMessageDialog(null,
+                            "The specified price is not a valid number.",
+                            "Product inventory", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                break;
+            case 4: //Quantity
+                try {
+                    int q = Integer.valueOf(newVal);
+                    item.setQuantity(q);
+                } catch(NumberFormatException e) {
+                    JOptionPane.showMessageDialog(null,
+                            "The specified quantity is not a valid number.",
+                            "Product inventory", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                break;
+            default:
+                JOptionPane.showMessageDialog(null,
+                        "Please select an update option.",
+                        "Product inventory", JOptionPane.ERROR_MESSAGE);
+                return;
+        }
+    
+        JOptionPane.showMessageDialog(null,
+                "Successfully updated the value.",
+                "Product inventory", JOptionPane.INFORMATION_MESSAGE);
     } //getUpdateButtonSemantics
 
     /**
      * Gets the semantics of an update view's clear button.
      */
     private void getClearButtonSemantics() {
-        //TODO implement method
+        updateView.getSkuTextField().setText("");
+        updateView.getFieldComboBox().setSelectedIndex(-1);
+        updateView.getNewFieldValueTextField().setText("");
     } //getClearButtonSemantics
 
     /**

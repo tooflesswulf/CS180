@@ -1,3 +1,5 @@
+import sun.font.TrueTypeFont;
+
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 
@@ -45,7 +47,6 @@ public class VendingMachineView {
      * Constructs a newly allocated {@code VendingMachineView} object.
      */
     public VendingMachineView() {
-//        JMenuBar a = new JMenuBar();
         this.mainJMenuBar = new JMenuBar();
         this.machineJMenu = new JMenu("Machine");
         this.refillJMenuItem = new JMenuItem("Refill Item");
@@ -128,4 +129,45 @@ public class VendingMachineView {
     public JLabel getDoorJLabel() {
         return this.doorJLabel;
     } //getDoorJLabel
+    
+    public void enableButton(String name) {
+        switch(name) {
+            case "apple":
+                appleJButton.setEnabled(true);
+                break;
+            case "aubergine":
+                aubergineJButton.setEnabled(true);
+                break;
+            case "broccoli":
+                broccoliJButton.setEnabled(true);
+                break;
+            case "cherries":
+                cherriesJButton.setEnabled(true);
+                break;
+            case "orange":
+                orangeJButton.setEnabled(true);
+                break;
+            case "pineapple":
+                pineappleJButton.setEnabled(true);
+                break;
+            case "banana":
+                bananaJButton.setEnabled(true);
+                break;
+            case "lemon":
+                lemonJButton.setEnabled(true);
+                break;
+            case "raspberry":
+                raspberryJButton.setEnabled(true);
+                break;
+            case "strawberry":
+                strawberryJButton.setEnabled(true);
+                break;
+            case "tomato":
+                tomatoJButton.setEnabled(true);
+                break;
+            case "watermelon":
+                watermelonJButton.setEnabled(true);
+                break;
+        }
+    }
 }

@@ -46,7 +46,7 @@ final class ChatServer {
         int recv_id = msg.getRecipient();
         
         List<ClientThread> sendTo = clients.stream()
-                .filter(ct -> ct.id == recv_id || (recv_id==-1 && ct.id!=fromID))
+                .filter(ct -> ct.id == recv_id || (recv_id==-1 ))
                 .collect(Collectors.toList());
         
         for(ClientThread ct : sendTo) {
@@ -214,7 +214,7 @@ final class ChatServer {
             port = Integer.valueOf(args[0]);
         }
         
-        ChatServer server = new ChatServer(1500);
+        ChatServer server = new ChatServer(port);
         server.start();
     }
 }

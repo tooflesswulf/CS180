@@ -1,3 +1,11 @@
+import jdk.nashorn.internal.scripts.JO;
+import sun.plugin.perf.PluginRollup;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.beans.PropertyChangeListener;
+
 /**
  * An add controller of a product inventory application.
  *
@@ -32,7 +40,7 @@ public final class AddController {
             this.addView = addView;
 
             this.addView.getAddButton().addActionListener(e -> this.getAddButtonSemantics());
-
+    
             this.addView.getClearButton().addActionListener(e -> this.getClearButtonSemantics());
         } //end if
     } //AddController
@@ -41,14 +49,82 @@ public final class AddController {
      * Gets the semantics of an add view's add button.
      */
     private void getAddButtonSemantics() {
-        //TODO implement method
+        String sku = addView.getSkuTextField().getText();
+        String name = addView.getNameTextField().getText();
+        String wholesalePrice = addView.getWholesalePriceTextField().getText();
+        String retailPrice = addView.getRetailPriceTextField().getText();
+        String quantity = addView.getQuantityTextField().getText();
+    
+        if(sku==null || sku.equals("")) {
+            JOptionPane.showMessageDialog(null,
+                    "SKU cannot be empty.",
+                    "Product inventory", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Product empty = new Product();
+        empty.setSku(sku);
+        if(inventoryModel.contains(empty)) {
+            JOptionPane.showMessageDialog(null,
+                    "The product could not be added to the inventory.\n" +
+                            "A product with the specified SKU already exists.",
+                    "Product inventory", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if(name==null || name.equals("")) {
+            JOptionPane.showMessageDialog(null,
+                    "Name cannot be empty.",
+                    "Product inventory", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        double wPrice, rPrice;
+        int q;
+        try {
+            wPrice = Double.valueOf(wholesalePrice);
+            if(wPrice <= 0) throw new NumberFormatException("nonnegative");
+        } catch(NumberFormatException e) {
+            JOptionPane.showMessageDialog(null,
+                    "The specified wholesale price is not a valid number.",
+                    "Product inventory", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        try {
+            rPrice = Double.valueOf(retailPrice);
+            if(rPrice <= 0) throw new NumberFormatException("nonnegative");
+        } catch(NumberFormatException e) {
+            JOptionPane.showMessageDialog(null,
+                    "The specified retail price is not a valid number.",
+                    "Product inventory", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        try {
+            q = Integer.valueOf(quantity);
+            if(q <= 0) throw new NumberFormatException("nonnegative");
+        } catch(NumberFormatException e) {
+            JOptionPane.showMessageDialog(null,
+                    "The specified quantity is not a valid integer.",
+                    "Product inventory", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        Product toAdd = new Product(sku, name, wPrice, rPrice, q);
+        inventoryModel.add(toAdd);
+        JOptionPane.showMessageDialog(null,
+                "The product has been added.",
+                "Product inventory", JOptionPane.INFORMATION_MESSAGE);
     } //getAddButtonSemantics
 
     /**
      * Gets the semantics of an add view's clear button.
      */
     private void getClearButtonSemantics() {
-        //TODO implement method
+        addView.getSkuTextField().setText("");
+        addView.getNameTextField().setText("");
+        addView.getWholesalePriceTextField().setText("");
+        addView.getRetailPriceTextField().setText("");
+        addView.getQuantityTextField().setText("");
     } //getClearButtonSemantics
 
     /**

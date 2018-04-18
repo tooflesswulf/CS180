@@ -1,3 +1,7 @@
+import javax.swing.*;
+import java.util.List;
+import java.util.Optional;
+
 /**
  * A search controller of a product inventory application.
  *
@@ -41,14 +45,107 @@ public final class SearchController {
      * Gets the semantics of a search view's search button.
      */
     private void getSearchButtonSemantics() {
-        //TODO implement method
+        String searchValue = searchView.getSearchValueTextField().getText();
+        int searchOption = searchView.getFieldComboBox().getSelectedIndex();
+        
+        StringBuilder print = new StringBuilder();
+        
+        
+        Product item;
+        List<Product> items;
+        switch (searchOption) {
+            case 0: //SKU
+                item = inventoryModel.searchBySku(searchValue).orElse(null);
+                if(item == null) {
+                    print.append("No item found with that SKU.");
+                } else {
+                    print.append(item.toString());
+                }
+                break;
+            case 1: //Name
+                items = inventoryModel.searchByName(searchValue);
+                if(items.size() == 0) {
+                    print.append("No items found with that name.");
+                }
+                
+                for(Product i : items) {
+                    print.append(i.toString());
+                    print.append("\n\n");
+                }
+                break;
+            case 2: //Wholesale price
+                try {
+                    items = inventoryModel.searchByWholesalePrice(Double.valueOf(searchValue));
+                } catch(NumberFormatException e) {
+                    JOptionPane.showMessageDialog(null,
+                            "The specified price is not a valid number.",
+                            "Product inventory", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                if(items.size() == 0) {
+                    print.append("No items found with that price.");
+                }
+    
+                for(Product i : items) {
+                    print.append(i.toString());
+                    print.append("\n\n");
+                }
+                break;
+            case 3: //Retail price
+                try {
+                    items = inventoryModel.searchByRetailPrice(Double.valueOf(searchValue));
+                } catch(NumberFormatException e) {
+                    JOptionPane.showMessageDialog(null,
+                            "The specified price is not a valid number.",
+                            "Product inventory", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+    
+                if(items.size() == 0) {
+                    print.append("No items found with that price.");
+                }
+    
+                for(Product i : items) {
+                    print.append(i.toString());
+                    print.append("\n\n");
+                }
+                break;
+            case 4: //Quantity
+                try {
+                    items = inventoryModel.searchByQuantity(Integer.valueOf(searchValue));
+                } catch(NumberFormatException e) {
+                    JOptionPane.showMessageDialog(null,
+                            "The specified price is not a valid number.",
+                            "Product inventory", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+    
+                if(items.size() == 0) {
+                    print.append("No items found with that quantity.");
+                }
+    
+                for(Product i : items) {
+                    print.append(i.toString());
+                    print.append("\n\n");
+                }
+                break;
+            default:
+                JOptionPane.showMessageDialog(null,
+                        "Please select an search option.",
+                        "Product inventory", JOptionPane.ERROR_MESSAGE);
+                return;
+        }
+        
+        searchView.getResultsTextArea().setText(print.toString());
     } //getSearchButtonSemantics
 
     /**
      * Gets the semantics of a search view's clear button.
      */
     private void getClearButtonSemantics() {
-        //TODO implement method
+        searchView.getSearchValueTextField().setText("");
+        searchView.getFieldComboBox().setSelectedIndex(-1);
     } //getClearButtonSemantics
 
     /**

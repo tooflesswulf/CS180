@@ -1,4 +1,8 @@
 import javax.swing.*;
+import javax.swing.event.MenuKeyEvent;
+import javax.swing.event.MenuKeyListener;
+import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Optional;
 
 /**
@@ -22,15 +26,95 @@ public class VendingMachineController {
      */
     public VendingMachineController() {
         this.model = new VendingMachineModel();
-    
-        System.out.println("Got here.");
-        JMenuBar a = new JMenuBar();
-        System.out.println("crash?");
-        
         this.view = new VendingMachineView();
 
         //TODO implement your code here
-        System.out.println("How about now?");
+        view.getRefillJMenuItem().addActionListener(new Action() {
+            @Override
+            public Object getValue(String key) {
+                return null;
+            }
+    
+            @Override
+            public void putValue(String key, Object value) {
+        
+            }
+    
+            @Override
+            public void setEnabled(boolean b) {
+        
+            }
+    
+            @Override
+            public boolean isEnabled() {
+                return false;
+            }
+    
+            @Override
+            public void addPropertyChangeListener(PropertyChangeListener listener) {
+        
+            }
+    
+            @Override
+            public void removePropertyChangeListener(PropertyChangeListener listener) {
+        
+            }
+    
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String resp = JOptionPane.showInputDialog("Enter the name of the bin to refill:");
+                
+                if(resp == null) return;
+                
+                for(Bin b : model.getBins()) {
+                    System.out.println(b.getName());
+                    if(b.getName().equalsIgnoreCase(resp)) {
+                        System.out.println("equality treu");
+                        b.refill();
+                        view.enableButton(resp.toLowerCase());
+                        return;
+                    }
+                }
+            }
+        });
+        
+        view.getDisplayProfitJMenuItem().addActionListener(new Action() {
+            @Override
+            public Object getValue(String key) {
+                return null;
+            }
+    
+            @Override
+            public void putValue(String key, Object value) {
+        
+            }
+    
+            @Override
+            public void setEnabled(boolean b) {
+        
+            }
+    
+            @Override
+            public boolean isEnabled() {
+                return false;
+            }
+    
+            @Override
+            public void addPropertyChangeListener(PropertyChangeListener listener) {
+        
+            }
+    
+            @Override
+            public void removePropertyChangeListener(PropertyChangeListener listener) {
+        
+            }
+    
+            @Override
+            public void actionPerformed(ActionEvent e) {
+//                double prof = model.getProfit();
+                JOptionPane.showMessageDialog(null, String.format("Profit:\t%.2f", model.getProfit()));
+            }
+        });
     
         this.setUpGUI();
     } //VendingMachineController
